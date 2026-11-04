@@ -72,6 +72,7 @@ const settings = defineCollection({
       linkedin: z.url().optional(),
       instagram: z.url().optional(),
       youtube: z.url().optional(),
+      x: z.url().optional(),
     }),
   }),
 });

@@ -54,6 +54,7 @@ const socialNames: Record<keyof typeof settings.social, string> = {
   linkedin: 'LinkedIn',
   instagram: 'Instagram',
   youtube: 'YouTube',
+  x: 'X (Twitter)',
 };
 const socials = (Object.keys(socialNames) as (keyof typeof socialNames)[])
   .filter((key) => settings.social[key])
@@ -106,7 +107,7 @@ const socials = (Object.keys(socialNames) as (keyof typeof socialNames)[])
         {
           socials.map((s) => (
             <li>
-              <a href={s.href} target="_blank" rel="noopener me" aria-label={`${s.name} ${t('a11y.newTab')}`}>
+              <a href={s.href} target="_blank" rel="noopener" aria-label={`${s.name} ${t('a11y.newTab')}`}>
                 <Icon name={s.key} size={20} />
               </a>
             </li>
