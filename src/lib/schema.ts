@@ -22,7 +22,12 @@ export function churchJsonLd(settings: Settings, site: URL, description: string,
       { '@type': 'ContactPoint', contactType: 'customer support', email: settings.email, telephone: settings.phone, availableLanguage: ['en', 'nl'] },
       { '@type': 'ContactPoint', contactType: 'Faithline', telephone: settings.faithline },
     ],
-    parentOrganization: { '@type': 'Organization', name: 'Prophet Jerome Fernando Ministries', url: settings.ministryUrl },
-    sameAs: Object.values(settings.social).filter(Boolean),
+    // The social accounts in settings are Prophet Jerome Fernando's official pages, so they belong to the ministry.
+    parentOrganization: {
+      '@type': 'Organization',
+      name: 'Prophet Jerome Fernando Ministries',
+      url: settings.ministryUrl,
+      sameAs: Object.values(settings.social).filter(Boolean),
+    },
   };
 }
