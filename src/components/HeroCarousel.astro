@@ -1,0 +1,102 @@
+---
+import { Image } from 'astro:assets';
+import type { ImageMetadata } from 'astro';
+import Icon from './Icon.astro';
+import { useTranslations, type Lang } from '../i18n/utils';
+
+/** Large centred slide with neighbours peeking either side, arrows and dots. */
+interface Props {
+  lang: Lang;
+  slides: { image: ImageMetadata; alt: string }[];
+}
+
+const { lang, slides } = Astro.props;
+const t = useTranslations(lang);
+---
+
+<section class="hero" aria-label={t('a11y.heroCarousel')} aria-roledescription={t('a11y.carousel')}>
+  <div class="swiper hero__swiper" data-hero-carousel>
+    <div class="swiper-wrapper">
+      {
+        slides.map((slide, i) => (
+          <div class="swiper-slide hero__slide">
+            <Image
+              src={slide.image}
+              alt={slide.alt}
+              widths={[480, 800, 1100, 1400]}
+              sizes="(min-width: 1100px) 760px, (min-width: 768px) 66vw, 88vw"
+              loading={i === 0 ? 'eager' : 'lazy'}
+              fetchpriority={i === 0 ? 'high' : undefined}
+            />
+          </div>
+        ))
+      }
+    </div>
+  </div>
+
+  <div class="container hero__controls">
+    <button class="carousel-btn" type="button" data-prev aria-label={t('a11y.prev')}><Icon name="arrow-left" /></button>
+    <div class="carousel-dots" data-dots></div>
+    <button class="carousel-btn" type="button" data-next aria-label={t('a11y.next')}><Icon name="arrow-right" /></button>
+  </div>
+</section>
+
+<script>
+  import { initHeroCarousels } from '../scripts/carousels';
+  initHeroCarousels();
+</script>
+
+<style>
+  .hero {
+    padding-top: var(--space-lg);
+  }
+
+  .hero__swiper {
+    overflow: hidden;
+  }
+
+  /* Before Swiper loads, show the first slide only (no layout jump). */
+  .hero__swiper:not(.swiper-initialized) .swiper-wrapper {
+    display: flex;
+    justify-content: center;
+  }
+
+  .hero__swiper:not(.swiper-initialized) .hero__slide {
+    flex: 0 0 88%;
+  }
+
+  .hero__swiper:not(.swiper-initialized) .hero__slide ~ .hero__slide {
+    display: none;
+  }
+
+  .hero__slide {
+    overflow: hidden;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    transform: scale(0.92);
+    opacity: 0.55;
+    transition:
+      transform 450ms var(--ease),
+      opacity 450ms var(--ease);
+  }
+
+  .hero__slide.swiper-slide-active,
+  .hero__swiper:not(.swiper-initialized) .hero__slide {
+    transform: none;
+    opacity: 1;
+  }
+
+  .hero__slide img {
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    object-fit: cover;
+  }
+
+  .hero__controls {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-lg);
+    margin-top: var(--space-md);
+  }
+</style>

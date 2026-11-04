@@ -1,0 +1,160 @@
+---
+import { Image } from 'astro:assets';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import Button from '../Button.astro';
+import Icon from '../Icon.astro';
+import { getMeetings } from '../../lib/content';
+import { formatWeekdayDate, useTranslations, type Lang } from '../../i18n/utils';
+
+interface Props {
+  lang: Lang;
+}
+
+const { lang } = Astro.props;
+const t = useTranslations(lang);
+const meetings = await getMeetings(lang);
+const offsets = { CET: '+01:00', CEST: '+02:00' } as const;
+
+/** Text read out instead of the poster: everything a visitor needs from it. */
+const flyerAlt = (m: (typeof meetings)[number]['data']) => {
+  const base = t('meetings.flyerAlt', {
+    title: m.title,
+    date: formatWeekdayDate(m.date, lang),
+    time: m.time,
+    timezone: m.timezone,
+  });
+  return m.meetingId ? `${base} ${t('meetings.flyerAltId', { id: m.meetingId })}` : base;
+};
+---
+
+<BaseLayout title={t('meetings.title')} description={t('meetings.description')}>
+  <div class="container meetings-page">
+    <header class="meetings-head">
+      <h1>{t('meetings.title')}</h1>
+      <p>{t('meetings.subtitle')}</p>
+    </header>
+
+    {
+      meetings.length === 0 ? (
+        <p class="card meetings-empty">{t('meetings.empty')}</p>
+      ) : (
+        <ul role="list" class="flyers">
+          {meetings.map(({ data }) => {
+            const day = data.date.toISOString().slice(0, 10);
+            return (
+              <li>
+                {data.flyer ? (
+                  <a class="flyer" href={data.zoomLink} target="_blank" rel="noopener" title={t('meetings.joinFlyer')}>
+                    <Image
+                      src={data.flyer}
+                      alt={flyerAlt(data)}
+                      widths={[343, 480, 686]}
+                      sizes="(min-width: 768px) 430px, 100vw"
+                      class="flyer__img"
+                    />
+                    <span class="visually-hidden"> – {t('meetings.joinFlyer')} {t('a11y.newTab')}</span>
+                  </a>
+                ) : (
+                  <article class="card meeting">
+                    <p class="meeting__row">
+                      <Icon name="calendar" size={20} />
+                      <time datetime={day}>{formatWeekdayDate(data.date, lang)}</time>
+                    </p>
+                    <p class="meeting__row">
+                      <Icon name="clock" size={20} />
+                      <time datetime={`${day}T${data.time}${offsets[data.timezone]}`}>
+                        {data.time} {data.timezone}
+                      </time>
+                    </p>
+                    <h2 class="meeting__title">{data.title}</h2>
+                    <p>{data.description}</p>
+                    <Button href={data.zoomLink} variant="solid" external newTabLabel={t('a11y.newTab')}>
+                      <Icon name="video" size={20} />
+                      {t('meetings.join')}
+                    </Button>
+                  </article>
+                )}
+              </li>
+            );
+          })}
+        </ul>
+      )
+    }
+  </div>
+</BaseLayout>
+
+<style>
+  .meetings-page {
+    padding-block: var(--space-xl) var(--space-lg);
+  }
+
+  .meetings-head h1 {
+    font-size: var(--fs-xl);
+  }
+
+  .meetings-head p {
+    margin-top: var(--space-sm);
+    color: var(--color-ink);
+    font-size: var(--fs-base);
+    font-weight: 600;
+  }
+
+  .flyers {
+    display: grid;
+    gap: var(--space-xl) var(--space-lg);
+    margin-top: var(--space-lg);
+  }
+
+  .flyer {
+    display: block;
+    box-shadow: var(--shadow-sm);
+    transition:
+      transform var(--dur) var(--ease),
+      box-shadow var(--dur) var(--ease);
+  }
+
+  .flyer:hover {
+    box-shadow: var(--shadow-lg);
+    transform: translateY(-3px);
+  }
+
+  .flyer__img {
+    width: 100%;
+    height: auto;
+  }
+
+  /* Text card for meetings that have no poster yet */
+  .meeting {
+    display: grid;
+    justify-items: start;
+    align-content: start;
+    gap: var(--space-sm);
+    height: 100%;
+    padding: var(--space-lg);
+  }
+
+  .meeting__row {
+    display: flex;
+    align-items: center;
+    gap: var(--space-xs);
+    color: var(--color-ink);
+    font-weight: 500;
+  }
+
+  .meeting__title {
+    margin-top: var(--space-xs);
+    font-size: var(--fs-lg);
+  }
+
+  .meetings-empty {
+    margin-top: var(--space-lg);
+    padding: var(--space-xl);
+    text-align: center;
+  }
+
+  @media (min-width: 640px) {
+    .flyers {
+      grid-template-columns: repeat(2, minmax(0, 430px));
+    }
+  }
+</style>

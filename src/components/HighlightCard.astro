@@ -1,0 +1,58 @@
+---
+import type { CollectionEntry } from 'astro:content';
+import HighlightVideo from './HighlightVideo.astro';
+import { formatLongDate, useTranslations, type Lang } from '../i18n/utils';
+
+/** Content of one highlight: date label, date, title, speaker and the video. */
+interface Props {
+  entry: CollectionEntry<'highlights'>;
+  lang: Lang;
+  headingLevel?: 'h2' | 'h3';
+}
+
+const { entry, lang, headingLevel = 'h2' } = Astro.props;
+const t = useTranslations(lang);
+const { title, speaker, date, youtubeId, thumbnail } = entry.data;
+const Heading = headingLevel;
+---
+
+<div class="highlight">
+  <p class="highlight__label">{t('community.dateLabel')}</p>
+  <p class="highlight__date"><time datetime={date.toISOString().slice(0, 10)}>{formatLongDate(date, lang)}</time></p>
+  <Heading class="highlight__title">{title}</Heading>
+  <p class="highlight__speaker">{speaker}</p>
+  <HighlightVideo youtubeId={youtubeId} thumbnail={thumbnail} title={title} playLabel={t('a11y.play')} />
+</div>
+
+<style>
+  .highlight {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2xs);
+    text-align: center;
+  }
+
+  .highlight__label {
+    color: var(--color-muted);
+    font-size: var(--fs-xs);
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .highlight__date {
+    color: var(--color-ink);
+    font-size: var(--fs-base);
+    font-weight: 600;
+  }
+
+  .highlight__title {
+    margin-top: var(--space-sm);
+    font-size: var(--fs-md);
+  }
+
+  .highlight__speaker {
+    margin-bottom: var(--space-sm);
+    font-size: var(--fs-sm);
+  }
+</style>

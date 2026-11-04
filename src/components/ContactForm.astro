@@ -1,0 +1,146 @@
+---
+import { useTranslations, type Lang } from '../i18n/utils';
+
+/**
+ * Contact form. With PUBLIC_FORMSPREE_ID set it posts to Formspree (enhanced with fetch);
+ * without it, submitting opens the visitor's email app addressed to `email`.
+ */
+interface Props {
+  lang: Lang;
+  email: string;
+}
+
+const { lang, email } = Astro.props;
+const t = useTranslations(lang);
+const formspreeId = import.meta.env.PUBLIC_FORMSPREE_ID?.trim();
+const mode = formspreeId ? 'formspree' : 'mailto';
+const action = formspreeId ? `https://formspree.io/f/${encodeURIComponent(formspreeId)}` : `mailto:${email}`;
+---
+
+<section class="card contact-form" aria-labelledby="contact-form-title">
+  <h2 id="contact-form-title">{t('contact.form.title')}</h2>
+  {mode === 'mailto' && <p class="contact-form__note">{t('contact.form.mailtoNote')}</p>}
+
+  <form
+    action={action}
+    method="post"
+    enctype={mode === 'mailto' ? 'text/plain' : undefined}
+    data-contact-form
+    data-mode={mode}
+    data-email={email}
+    data-sending={t('contact.form.sending')}
+    data-success={t('contact.form.success')}
+    data-error={t('contact.form.error')}
+    data-subject={t('contact.form.subject')}
+  >
+    <div class="field">
+      <label for="cf-name">{t('contact.form.name')}</label>
+      <input id="cf-name" name="name" type="text" autocomplete="name" required />
+    </div>
+    <div class="field">
+      <label for="cf-email">{t('contact.form.email')}</label>
+      <input id="cf-email" name="email" type="email" autocomplete="email" required />
+    </div>
+    <div class="field field--full">
+      <label for="cf-message">{t('contact.form.message')}</label>
+      <textarea id="cf-message" name="message" rows="5" required></textarea>
+    </div>
+    {/* Honeypot for Formspree spam filtering. */}
+    {mode === 'formspree' && <input type="text" name="_gotcha" class="visually-hidden" tabindex="-1" autocomplete="off" aria-hidden="true" />}
+    <div class="field--full contact-form__actions">
+      <button class="btn btn--solid" type="submit">{t('contact.form.submit')}</button>
+      <p class="contact-form__status" role="status" aria-live="polite" data-status></p>
+    </div>
+  </form>
+</section>
+
+<script>
+  import { initContactForms } from '../scripts/contact-form';
+  initContactForms();
+</script>
+
+<style>
+  .contact-form {
+    padding: var(--space-xl) var(--space-lg);
+  }
+
+  .contact-form h2 {
+    font-size: var(--fs-lg);
+  }
+
+  .contact-form__note {
+    margin-top: var(--space-xs);
+    font-size: var(--fs-sm);
+  }
+
+  form {
+    display: grid;
+    gap: var(--space-md);
+    margin-top: var(--space-lg);
+  }
+
+  .field {
+    display: grid;
+    gap: var(--space-2xs);
+  }
+
+  label {
+    font-size: var(--fs-sm);
+    font-weight: 500;
+  }
+
+  input,
+  textarea {
+    width: 100%;
+    min-height: 48px;
+    padding: 0.75rem 1rem;
+    border: 1.5px solid var(--color-line);
+    border-radius: var(--radius-sm);
+    background: var(--color-surface);
+    transition: border-color var(--dur) var(--ease);
+  }
+
+  textarea {
+    resize: vertical;
+  }
+
+  input:hover,
+  textarea:hover,
+  input:focus,
+  textarea:focus {
+    border-color: var(--color-ink);
+  }
+
+  .contact-form__actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--space-md);
+  }
+
+  .contact-form__status:empty {
+    display: none;
+  }
+
+  .contact-form__status[data-state='success'] {
+    color: var(--color-success);
+  }
+
+  .contact-form__status[data-state='error'] {
+    color: var(--color-error);
+  }
+
+  @media (min-width: 768px) {
+    .contact-form {
+      padding: var(--space-2xl) var(--space-xl);
+    }
+
+    form {
+      grid-template-columns: 1fr 1fr;
+    }
+
+    .field--full {
+      grid-column: 1 / -1;
+    }
+  }
+</style>

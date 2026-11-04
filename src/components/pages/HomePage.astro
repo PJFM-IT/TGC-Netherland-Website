@@ -1,0 +1,197 @@
+---
+import { Image } from 'astro:assets';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import HeroCarousel from '../HeroCarousel.astro';
+import Card from '../Card.astro';
+import SplitCard from '../SplitCard.astro';
+import Button from '../Button.astro';
+import Icon from '../Icon.astro';
+import { getSettings } from '../../lib/content';
+import { churchJsonLd } from '../../lib/schema';
+import { localizePath, useTranslations, type Lang } from '../../i18n/utils';
+import logo from '../../assets/images/logo-glorious-church.png';
+import heroDomeService from '../../assets/images/hero-dome-service.webp';
+import heroDomeCongregation from '../../assets/images/hero-dome-congregation.webp';
+import heroWorshipHands from '../../assets/images/hero-worship-hands.webp';
+import heroOutdoorWorship from '../../assets/images/hero-outdoor-worship.webp';
+import heroDomeAerial from '../../assets/images/hero-miracle-dome-aerial.webp';
+import visionImg from '../../assets/images/vision.webp';
+import prophetImg from '../../assets/images/prophet-jerome.webp';
+import flagsImg from '../../assets/images/flags.jpg';
+import aboutBg from '../../assets/images/about-bg.jpg';
+
+interface Props {
+  lang: Lang;
+}
+
+const { lang } = Astro.props;
+const t = useTranslations(lang);
+const settings = await getSettings();
+const site = Astro.site ?? new URL(Astro.url.origin);
+
+const slides = [
+  { image: heroDomeService, alt: t('home.hero.domeService') },
+  { image: heroDomeCongregation, alt: t('home.hero.domeCongregation') },
+  { image: heroWorshipHands, alt: t('home.hero.worshipHands') },
+  { image: heroOutdoorWorship, alt: t('home.hero.outdoorWorship') },
+  { image: heroDomeAerial, alt: t('home.hero.domeAerial') },
+];
+
+const jsonLd = [
+  churchJsonLd(settings, site, t('site.description'), logo.src),
+  {
+    '@context': 'https://schema.org',
+    '@type': 'WebSite',
+    name: settings.siteName,
+    url: new URL(localizePath('/', lang), site).href,
+    inLanguage: lang,
+    publisher: { '@id': `${site.href}#church` },
+  },
+];
+---
+
+<BaseLayout jsonLd={jsonLd}>
+  <h1 class="visually-hidden">{t('home.title')}</h1>
+
+  <HeroCarousel lang={lang} slides={slides} />
+
+  <div class="container section home-stack">
+    <div class="grid-2">
+      <Card
+        image={visionImg}
+        imageAlt={t('home.visionAlt')}
+        title={t('home.vision.title')}
+        linkLabel={t('home.vision.link')}
+        href={settings.globalChurchUrl}
+        external
+        newTabLabel={t('a11y.newTab')}
+      >
+        {t('home.vision.text')}
+      </Card>
+      <Card
+        image={prophetImg}
+        imageAlt={t('home.prophetAlt')}
+        title={t('home.prophet.title')}
+        linkLabel={t('home.prophet.link')}
+        href={localizePath('/prophet-jerome', lang)}
+        imagePosition="50% 18%"
+      >
+        {t('home.prophet.text')}
+      </Card>
+    </div>
+
+    <SplitCard title={t('home.global.title')} image={flagsImg} imageAlt={t('home.global.imageAlt')}>
+      <p>{t('home.global.text')}</p>
+      <Button href={localizePath('/find-a-church', lang)} size="sm">{t('home.global.button')}</Button>
+    </SplitCard>
+  </div>
+
+  <section class="about" aria-labelledby="about-title">
+    <Image src={aboutBg} alt="" widths={[640, 1100, 1600, 2000]} sizes="100vw" class="about__bg" />
+    <div class="container about__content">
+      <h2 id="about-title">{t('home.about.title')}</h2>
+      <Button href={localizePath('/what-we-believe', lang)} variant="white" size="xl">{t('home.about.button')}</Button>
+      <p class="about__hint"><em>{t('home.about.hint')}</em></p>
+    </div>
+  </section>
+
+  <div class="container home-stack">
+    <a class="card banner" href={settings.ministryUrl} target="_blank" rel="noopener">
+      <span class="banner__text">{t('home.banner')}<span class="visually-hidden"> {t('a11y.newTab')}</span></span>
+      <span class="banner__icon"><Icon name="arrow-right" size={22} /></span>
+    </a>
+  </div>
+</BaseLayout>
+
+<style>
+  .home-stack {
+    display: grid;
+    gap: var(--space-xl);
+  }
+
+  /* About: full-width, blurred photo that fades up into the page background */
+  .about {
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
+    padding-block: var(--space-xl) clamp(6rem, 4rem + 8vw, 11rem);
+    margin-bottom: var(--space-md);
+    text-align: center;
+  }
+
+  .about__bg {
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    width: 100%;
+    max-width: none;
+    height: 100%;
+    object-fit: cover;
+    filter: blur(8px) grayscale(1);
+    opacity: 0.6;
+    -webkit-mask-image: linear-gradient(to bottom, transparent 0%, transparent 20%, #000 60%, #000 82%, transparent 100%);
+    mask-image: linear-gradient(to bottom, transparent 0%, transparent 20%, #000 60%, #000 82%, transparent 100%);
+  }
+
+  .about__content {
+    display: grid;
+    justify-items: center;
+    gap: var(--space-lg);
+  }
+
+  .about h2 {
+    font-size: var(--fs-md);
+    font-weight: 600;
+  }
+
+  .about__hint {
+    margin-top: calc(-1 * var(--space-sm));
+    color: var(--color-ink);
+    font-size: var(--fs-sm);
+  }
+
+  /* Wide banner link */
+  .banner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-lg);
+    padding: var(--space-lg);
+    border-radius: var(--radius-lg);
+    font-size: var(--fs-md);
+    font-weight: 600;
+    text-decoration: none;
+    transition:
+      box-shadow var(--dur) var(--ease),
+      transform var(--dur) var(--ease);
+  }
+
+  .banner:hover {
+    box-shadow: var(--shadow-lg);
+  }
+
+  .banner__icon {
+    display: grid;
+    flex-shrink: 0;
+    place-items: center;
+    width: 52px;
+    height: 52px;
+    border: 1.5px solid var(--color-ink);
+    border-radius: 50%;
+    transition:
+      background-color var(--dur) var(--ease),
+      color var(--dur) var(--ease);
+  }
+
+  .banner:hover .banner__icon {
+    background: var(--color-ink);
+    color: var(--color-white);
+  }
+
+  @media (min-width: 768px) {
+    .banner {
+      padding: var(--space-xl) var(--space-2xl);
+      font-size: var(--fs-lg);
+    }
+  }
+</style>

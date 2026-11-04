@@ -1,0 +1,26 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import Button from '../components/Button.astro';
+import { getLangFromUrl, localizePath, useTranslations } from '../i18n/utils';
+
+const lang = getLangFromUrl(Astro.url);
+const t = useTranslations(lang);
+---
+
+<BaseLayout title={t('404.title')} description={t('404.text')} noindex>
+  <div class="container section not-found">
+    <h1>{t('404.title')}</h1>
+    <p>{t('404.text')}</p>
+    <Button href={localizePath('/', lang)}>{t('404.home')}</Button>
+  </div>
+</BaseLayout>
+
+<style>
+  .not-found {
+    display: grid;
+    justify-items: center;
+    gap: var(--space-md);
+    padding-block: var(--space-2xl);
+    text-align: center;
+  }
+</style>

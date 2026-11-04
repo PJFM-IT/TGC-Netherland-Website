@@ -1,0 +1,56 @@
+---
+import { Font } from 'astro:assets';
+import '../styles/global.css';
+import SEO from '../components/SEO.astro';
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+import { getLangFromUrl, localeTags, useTranslations } from '../i18n/utils';
+
+interface Props {
+  /** Page title (the site name is appended automatically). */
+  title?: string;
+  description?: string;
+  image?: string;
+  imageAlt?: string;
+  noindex?: boolean;
+  /** Footer overlaps the last section instead of sitting below a gap. */
+  footerFlush?: boolean;
+  jsonLd?: Record<string, unknown> | Record<string, unknown>[];
+}
+
+const lang = getLangFromUrl(Astro.url);
+const t = useTranslations(lang);
+const { title = t('site.name'), description = t('site.description'), image, imageAlt, noindex, jsonLd, footerFlush = false } = Astro.props;
+---
+
+<!doctype html>
+<html lang={localeTags[lang]}>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="generator" content={Astro.generator} />
+    <meta name="theme-color" content="#ffffff" />
+    <link rel="icon" type="image/png" sizes="64x64" href="/favicon.png" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="sitemap" href="/sitemap-index.xml" />
+    <Font cssVariable="--font-poppins" preload={[{ weight: '400', style: 'normal' }, { weight: '600', style: 'normal' }]} />
+    <SEO
+      title={title}
+      description={description}
+      lang={lang}
+      image={image}
+      imageAlt={imageAlt}
+      siteName={t('site.name')}
+      noindex={noindex}
+      jsonLd={jsonLd}
+    />
+  </head>
+  <body>
+    <a class="skip-link" href="#main">{t('a11y.skip')}</a>
+    <Header lang={lang} />
+    <main id="main" tabindex="-1">
+      <slot />
+    </main>
+    <Footer lang={lang} flush={footerFlush} />
+  </body>
+</html>

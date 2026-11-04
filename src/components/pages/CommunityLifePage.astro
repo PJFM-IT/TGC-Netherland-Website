@@ -1,0 +1,21 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import PageHeader from '../PageHeader.astro';
+import HighlightsCarousel from '../HighlightsCarousel.astro';
+import { getHighlights } from '../../lib/content';
+import { useTranslations, type Lang } from '../../i18n/utils';
+
+interface Props {
+  lang: Lang;
+}
+
+const { lang } = Astro.props;
+const t = useTranslations(lang);
+const highlights = await getHighlights(lang);
+---
+
+<BaseLayout title={t('community.title')} description={t('community.description')}>
+  <PageHeader title={t('community.title')} subtitle={t('community.subtitle')} align="left" />
+  {/* "View all" lives inside the phone mockup in the carousel. */}
+  <HighlightsCarousel lang={lang} entries={highlights} />
+</BaseLayout>

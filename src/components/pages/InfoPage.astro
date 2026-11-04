@@ -1,0 +1,95 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import PageHeader from '../PageHeader.astro';
+import Button from '../Button.astro';
+import { getSettings } from '../../lib/content';
+import { localizePath, useTranslations, type Lang, type UIKey } from '../../i18n/utils';
+
+/**
+ * Text page (About, What We Believe, FAQ, ...): an intro paragraph, then sections with an
+ * optional heading, one or more paragraphs and an optional button. All text comes from
+ * src/i18n/{en,nl}.json, so both languages stay in step.
+ *
+ * Link `href` is an internal path ("/contact") or one of the settings keys
+ * "settings:globalChurchUrl" / "settings:ministryUrl" for external sites.
+ */
+export interface InfoSection {
+  /** Anchor id, e.g. "receive-salvation" for /jesus/#receive-salvation. */
+  id?: string;
+  titleKey?: UIKey;
+  textKeys: UIKey[];
+  link?: { href: string; labelKey: UIKey };
+}
+
+interface Props {
+  lang: Lang;
+  titleKey: UIKey;
+  subtitleKey: UIKey;
+  introKey: UIKey;
+  sections?: InfoSection[];
+}
+
+const { lang, titleKey, subtitleKey, introKey, sections = [] } = Astro.props;
+const t = useTranslations(lang);
+const settings = await getSettings();
+
+const resolve = (href: string) => {
+  if (href === 'settings:globalChurchUrl') return { url: settings.globalChurchUrl, external: true };
+  if (href === 'settings:ministryUrl') return { url: settings.ministryUrl, external: true };
+  return { url: localizePath(href, lang), external: false };
+};
+---
+
+<BaseLayout title={t(titleKey)} description={t(introKey)}>
+  <PageHeader title={t(titleKey)} subtitle={t(subtitleKey)} />
+
+  <div class="container section">
+    <article class="card info">
+      <div class="prose">
+        <p class="lead">{t(introKey)}</p>
+        {
+          sections.map((s) => {
+            const link = s.link && resolve(s.link.href);
+            return (
+              <section id={s.id} aria-labelledby={s.titleKey && s.id ? `${s.id}-title` : undefined}>
+                {s.titleKey && <h2 id={s.id ? `${s.id}-title` : undefined}>{t(s.titleKey)}</h2>}
+                {s.textKeys.map((key) => (
+                  <p>{t(key)}</p>
+                ))}
+                {link && s.link && (
+                  <Button href={link.url} external={link.external} newTabLabel={t('a11y.newTab')}>
+                    {t(s.link.labelKey)}
+                  </Button>
+                )}
+              </section>
+            );
+          })
+        }
+      </div>
+    </article>
+  </div>
+</BaseLayout>
+
+<style>
+  .info {
+    padding: var(--space-xl) var(--space-lg);
+  }
+
+  .info section > * + * {
+    margin-top: var(--space-md);
+  }
+
+  .info section h2 {
+    font-size: var(--fs-lg);
+  }
+
+  .info :global(.btn) {
+    margin-top: var(--space-md);
+  }
+
+  @media (min-width: 768px) {
+    .info {
+      padding: var(--space-2xl);
+    }
+  }
+</style>

@@ -1,0 +1,50 @@
+---
+/** Grey band at the top of inner pages: one <h1> plus an optional subtitle. */
+interface Props {
+  title: string;
+  subtitle?: string;
+  /** "left" matches the Community Life design: left-aligned title with a bold subtitle. */
+  align?: 'center' | 'left';
+}
+
+const { title, subtitle, align = 'center' } = Astro.props;
+---
+
+<header class:list={['page-header', `page-header--${align}`]}>
+  <div class="container">
+    <h1>{title}</h1>
+    {subtitle && <p class="page-header__subtitle">{subtitle}</p>}
+  </div>
+</header>
+
+<style>
+  .page-header {
+    padding-block: clamp(2.25rem, 1.5rem + 3vw, 4rem);
+    background: var(--color-band);
+    text-align: center;
+  }
+
+  .page-header__subtitle {
+    margin-top: var(--space-xs);
+    color: var(--color-ink-soft);
+    font-size: var(--fs-md);
+    font-weight: 500;
+  }
+
+  .page-header--left {
+    padding-block: clamp(2rem, 1.4rem + 2.5vw, 3.25rem);
+    background: #e3e3e3;
+    text-align: left;
+  }
+
+  .page-header--left h1 {
+    font-size: var(--fs-xl);
+  }
+
+  .page-header--left .page-header__subtitle {
+    margin-top: var(--space-sm);
+    color: var(--color-ink);
+    font-size: var(--fs-base);
+    font-weight: 600;
+  }
+</style>

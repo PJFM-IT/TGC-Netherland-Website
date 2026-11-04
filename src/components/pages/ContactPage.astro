@@ -1,0 +1,176 @@
+---
+import { Image } from 'astro:assets';
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import ContactBlock from '../ContactBlock.astro';
+import { getPastors, getSettings } from '../../lib/content';
+import { churchJsonLd } from '../../lib/schema';
+import { useTranslations, type Lang } from '../../i18n/utils';
+import logo from '../../assets/images/logo-glorious-church.png';
+import pastorsPhoto from '../../assets/images/pastors-nl.png';
+
+interface Props {
+  lang: Lang;
+}
+
+const { lang } = Astro.props;
+const t = useTranslations(lang);
+const settings = await getSettings();
+const pastors = await getPastors();
+const site = Astro.site ?? new URL(Astro.url.origin);
+const tel = (n: string) => `tel:${n.replace(/[^\d+]/g, '')}`;
+
+// Google Maps embed (no API key). It only loads when scrolled near, see loading="lazy".
+const mapSrc = `https://maps.google.com/maps?q=${encodeURIComponent(settings.address)}&z=10&hl=${lang}&output=embed`;
+
+const jsonLd = {
+  ...churchJsonLd(settings, site, t('contact.description'), logo.src),
+  employee: pastors.map((p) => ({ '@type': 'Person', name: p.data.name, jobTitle: p.data.role })),
+};
+---
+
+<BaseLayout title={t('contact.subtitle')} description={t('contact.description')} jsonLd={jsonLd} footerFlush>
+  <section class="contact-top" aria-labelledby="contact-title">
+    <div class="container">
+      <p class="contact-top__eyebrow">{t('contact.title')}</p>
+      <h1 id="contact-title">{t('contact.subtitle')}</h1>
+
+      <div class="contact-blocks">
+        <ContactBlock
+          icon="mail-solid"
+          label={settings.email}
+          href={`mailto:${settings.email}`}
+          description={`${t('contact.email')}: ${settings.email}`}
+        />
+        <ContactBlock
+          icon="phone-waves"
+          label={t('contact.phoneLabel')}
+          href={tel(settings.phone)}
+          description={`${t('contact.phoneLabel')}: ${settings.phone}`}
+        />
+        <ContactBlock
+          icon="headset"
+          label={t('contact.faithlineLabel')}
+          href={tel(settings.faithline)}
+          description={`${t('contact.faithline')}: ${settings.faithline}`}
+        />
+      </div>
+    </div>
+  </section>
+
+  <section class="pastors" aria-labelledby="pastors-title">
+    <div class="container pastors__inner">
+      <Image
+        src={pastorsPhoto}
+        alt={pastors.map((p) => p.data.name).join(' & ')}
+        widths={[320, 480, 668]}
+        sizes="(min-width: 768px) 420px, 80vw"
+        class="pastors__photo"
+      />
+      <h2 id="pastors-title" class="pastors__title">{t('contact.pastors')}</h2>
+    </div>
+  </section>
+
+  <div class="map">
+    <iframe
+      src={mapSrc}
+      title={t('contact.mapTitle', { address: settings.address })}
+      loading="lazy"
+      referrerpolicy="no-referrer-when-downgrade"
+      allowfullscreen></iframe>
+  </div>
+</BaseLayout>
+
+<style>
+  /* Dark band; the bottom 20px of the cards hang over the white section below. */
+  .contact-top {
+    --overhang: 20px;
+    padding-top: var(--space-lg);
+    background: linear-gradient(
+      to bottom,
+      var(--color-deep) 0,
+      var(--color-deep) calc(100% - var(--overhang)),
+      var(--color-white) calc(100% - var(--overhang))
+    );
+    color: var(--color-white);
+    text-align: center;
+  }
+
+  .contact-top__eyebrow {
+    color: var(--color-teal-ink);
+    font-size: var(--fs-xs);
+  }
+
+  .contact-top h1 {
+    margin-top: var(--space-2xs);
+    font-size: var(--fs-lg);
+  }
+
+  .contact-blocks {
+    display: grid;
+    gap: var(--space-md);
+    margin-top: var(--space-xl);
+  }
+
+  .pastors {
+    background: var(--color-white);
+  }
+
+  .pastors__inner {
+    display: grid;
+    justify-items: center;
+    gap: var(--space-xl);
+    padding-top: var(--space-2xl);
+  }
+
+  .pastors__title {
+    order: -1;
+    max-width: 12ch;
+    font-size: var(--fs-md);
+    text-align: center;
+  }
+
+  .pastors__photo {
+    display: block;
+    width: min(100%, 360px);
+  }
+
+  /* The footer (footerFlush) slides up over the bottom of the map, so its rounded corners show the map behind them. */
+  .map iframe {
+    display: block;
+    width: 100%;
+    height: clamp(380px, 45vw, 580px);
+    border: 0;
+  }
+
+  @media (min-width: 768px) {
+    .contact-top {
+      --overhang: 18px;
+      padding-top: var(--space-md);
+    }
+
+    .contact-blocks {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: var(--space-lg);
+      max-width: 900px;
+      margin-inline: auto;
+    }
+
+    .pastors__inner {
+      grid-template-columns: 1fr 1fr;
+      align-items: center;
+      max-width: 900px;
+      padding-top: var(--space-xl);
+    }
+
+    .pastors__title {
+      order: 0;
+      align-self: center;
+      margin-bottom: var(--space-xl);
+    }
+
+    .pastors__photo {
+      align-self: end;
+      width: min(100%, 420px);
+    }
+  }
+</style>

@@ -1,0 +1,62 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import PageHeader from '../PageHeader.astro';
+import HighlightCard from '../HighlightCard.astro';
+import Icon from '../Icon.astro';
+import { getHighlights } from '../../lib/content';
+import { localizePath, useTranslations, type Lang } from '../../i18n/utils';
+
+interface Props {
+  lang: Lang;
+}
+
+const { lang } = Astro.props;
+const t = useTranslations(lang);
+const highlights = await getHighlights(lang);
+---
+
+<BaseLayout title={t('community.all.title')} description={t('community.all.description')}>
+  <PageHeader title={t('community.all.title')} subtitle={t('community.subtitle')} align="left" />
+
+  <div class="container section">
+    <a class="text-link back" href={localizePath('/community-life', lang)}>
+      <Icon name="arrow-left" size={18} />
+      {t('community.back')}
+    </a>
+
+    <ul role="list" class="highlight-grid">
+      {
+        highlights.map((entry) => (
+          <li class="card highlight-grid__item">
+            <HighlightCard entry={entry} lang={lang} />
+          </li>
+        ))
+      }
+    </ul>
+  </div>
+</BaseLayout>
+
+<script>
+  import '../../scripts/videos';
+</script>
+
+<style>
+  .back {
+    margin-bottom: var(--space-lg);
+  }
+
+  .highlight-grid {
+    display: grid;
+    gap: var(--space-lg);
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr));
+  }
+
+  .highlight-grid__item {
+    padding: var(--space-lg);
+  }
+
+  /* Thumbnails are portrait photos: show them 4:5 so faces are not cropped. */
+  .highlight-grid :global(lite-youtube.video)::after {
+    padding-bottom: 125%;
+  }
+</style>

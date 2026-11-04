@@ -1,0 +1,65 @@
+---
+import { languages, localizePath, stripLang, useTranslations, type Lang } from '../i18n/utils';
+
+interface Props {
+  lang: Lang;
+}
+
+const { lang } = Astro.props;
+const t = useTranslations(lang);
+// The 404 page has no language twin, so its switcher goes to the home pages.
+const stripped = stripLang(Astro.url.pathname);
+const basePath = stripped.replace(/\/$/, '') === '/404' ? '/' : stripped;
+const codes = Object.keys(languages) as Lang[];
+---
+
+<nav class="lang-switch" aria-label={t('a11y.language')}>
+  <ul role="list">
+    {
+      codes.map((code) => (
+        <li>
+          <a href={localizePath(basePath, code)} hreflang={code} lang={code} aria-current={code === lang ? 'true' : undefined}>
+            <span aria-hidden="true">{code.toUpperCase()}</span>
+            <span class="visually-hidden">{languages[code]}</span>
+          </a>
+        </li>
+      ))
+    }
+  </ul>
+</nav>
+
+<style>
+  .lang-switch ul {
+    display: flex;
+    align-items: center;
+    margin: 0;
+    padding: 3px;
+    border: 1.5px solid var(--color-ink);
+    border-radius: var(--radius-pill);
+  }
+
+  .lang-switch a {
+    display: grid;
+    place-items: center;
+    min-width: 40px;
+    min-height: 32px;
+    padding-inline: 0.5rem;
+    border-radius: var(--radius-pill);
+    font-size: var(--fs-xs);
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-decoration: none;
+    transition:
+      background-color var(--dur) var(--ease),
+      color var(--dur) var(--ease);
+  }
+
+  .lang-switch a:hover {
+    background: var(--color-bg);
+  }
+
+  .lang-switch a[aria-current] {
+    background: var(--color-ink);
+    color: var(--color-white);
+  }
+</style>

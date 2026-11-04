@@ -1,0 +1,35 @@
+---
+import { getImage } from 'astro:assets';
+import type { ImageMetadata } from 'astro';
+// Imported here (not in the client script) so Astro bundles it with the page CSS.
+import 'lite-youtube-embed/src/lite-yt-embed.css';
+
+/**
+ * YouTube video via lite-youtube-embed: shows our own optimised local thumbnail and
+ * only loads the YouTube player after a click. Requires `import 'lite-youtube-embed'`
+ * on the client (src/scripts/videos.ts).
+ * `portrait` fills its parent's height instead of using a 16:9 box.
+ */
+interface Props {
+  youtubeId: string;
+  thumbnail: ImageMetadata;
+  title: string;
+  playLabel: string;
+  portrait?: boolean;
+}
+
+const { youtubeId, thumbnail, title, playLabel, portrait = false } = Astro.props;
+const poster = await getImage({ src: thumbnail, width: portrait ? 560 : 640, format: 'webp' });
+---
+
+<lite-youtube
+  class:list={['video', portrait && 'video--portrait']}
+  videoid={youtubeId}
+  playlabel={`${playLabel}: ${title}`}
+  params="rel=0&modestbranding=1"
+  style={`background-image: url('${poster.src}')`}
+>
+  <button type="button" class="lyt-playbtn" title={`${playLabel}: ${title}`}>
+    <span class="lyt-visually-hidden">{playLabel}: {title}</span>
+  </button>
+</lite-youtube>

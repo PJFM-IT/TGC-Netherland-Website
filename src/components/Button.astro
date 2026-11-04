@@ -1,0 +1,25 @@
+---
+import type { HTMLAttributes } from 'astro/types';
+
+type Props = HTMLAttributes<'a'> & {
+  href: string;
+  variant?: 'outline' | 'solid' | 'light' | 'white';
+  size?: 'sm' | 'md' | 'lg' | 'xl';
+  /** Opens in a new tab with rel="noopener" and an accessible hint. */
+  external?: boolean;
+  newTabLabel?: string;
+};
+
+const { href, variant = 'outline', size = 'md', external = false, newTabLabel = '(opens in a new tab)', class: className, ...rest } = Astro.props;
+---
+
+<a
+  href={href}
+  class:list={['btn', variant !== 'outline' && `btn--${variant}`, size !== 'md' && `btn--${size}`, className]}
+  target={external ? '_blank' : undefined}
+  rel={external ? 'noopener' : undefined}
+  {...rest}
+>
+  <slot />
+  {external && <span class="visually-hidden"> {newTabLabel}</span>}
+</a>

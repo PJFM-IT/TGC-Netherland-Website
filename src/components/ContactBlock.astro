@@ -1,0 +1,68 @@
+---
+import Icon, { type IconName } from './Icon.astro';
+
+/**
+ * Teal contact card: white round icon and a short label. The whole card is the link
+ * (mailto:/tel:). `description` gives screen readers the full detail (e.g. the number).
+ */
+interface Props {
+  icon: IconName;
+  label: string;
+  href: string;
+  description?: string;
+}
+
+const { icon, label, href, description } = Astro.props;
+---
+
+<a class="contact-block" href={href} aria-label={description} title={description}>
+  <span class="contact-block__icon"><Icon name={icon} size={28} /></span>
+  <span class="contact-block__label">{label}</span>
+</a>
+
+<style>
+  .contact-block {
+    display: grid;
+    justify-items: center;
+    align-content: center;
+    gap: var(--space-sm);
+    min-height: 108px;
+    padding: var(--space-md);
+    border-radius: 12px;
+    background: var(--color-teal);
+    color: var(--color-white);
+    text-align: center;
+    text-decoration: none;
+    transition:
+      transform var(--dur) var(--ease),
+      box-shadow var(--dur) var(--ease),
+      background-color var(--dur) var(--ease);
+  }
+
+  .contact-block:hover {
+    background: var(--color-teal-dark);
+    box-shadow: var(--shadow);
+    transform: translateY(-2px);
+  }
+
+  .contact-block:focus-visible {
+    outline-color: var(--color-white);
+    outline-offset: -6px;
+  }
+
+  .contact-block__icon {
+    display: grid;
+    place-items: center;
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    background: var(--color-white);
+    color: var(--color-teal);
+  }
+
+  .contact-block__label {
+    font-size: var(--fs-sm);
+    font-weight: 600;
+    overflow-wrap: anywhere;
+  }
+</style>

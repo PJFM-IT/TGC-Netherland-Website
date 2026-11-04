@@ -1,0 +1,268 @@
+---
+import { Image } from 'astro:assets';
+import logo from '../assets/images/logo-glorious-church.png';
+import Icon, { type IconName } from './Icon.astro';
+import { getSettings } from '../lib/content';
+import { localizePath, useTranslations, type Lang } from '../i18n/utils';
+
+interface Props {
+  lang: Lang;
+  /** Pull the footer up over the last section (e.g. the Contact page map) so its rounded corners overlap it. */
+  flush?: boolean;
+}
+
+const { lang, flush = false } = Astro.props;
+const t = useTranslations(lang);
+const settings = await getSettings();
+const year = new Date().getFullYear();
+const path = (p: string) => localizePath(p, lang);
+
+type FooterLink = { label: string; href: string; external?: boolean };
+
+const columns: { title: string; links: FooterLink[] }[] = [
+  {
+    title: t('footer.find'),
+    links: [
+      { label: t('footer.local'), href: path('/find-a-church#local') },
+      { label: t('footer.global'), href: settings.globalChurchUrl, external: true },
+      { label: t('footer.online'), href: path('/meetings') },
+    ],
+  },
+  {
+    title: t('footer.help'),
+    links: [
+      { label: t('footer.faq'), href: path('/faq') },
+      { label: t('footer.contact'), href: path('/contact') },
+    ],
+  },
+  {
+    title: t('footer.jesus'),
+    links: [
+      { label: t('footer.whoIsJesus'), href: path('/jesus#who-is-jesus') },
+      { label: t('footer.salvation'), href: path('/jesus#receive-salvation') },
+    ],
+  },
+];
+
+const extraLinks: FooterLink[] = [
+  { label: t('footer.serve'), href: path('/serve') },
+  { label: t('footer.testimonies'), href: path('/testimonies') },
+];
+
+const socialNames: Record<keyof typeof settings.social, string> = {
+  facebook: 'Facebook',
+  linkedin: 'LinkedIn',
+  instagram: 'Instagram',
+  youtube: 'YouTube',
+};
+const socials = (Object.keys(socialNames) as (keyof typeof socialNames)[])
+  .filter((key) => settings.social[key])
+  .map((key) => ({ key: key as IconName, name: socialNames[key], href: settings.social[key] as string }));
+---
+
+<footer class:list={['site-footer', 'on-dark', flush && 'site-footer--flush']}>
+  <div class="container">
+    <a class="footer-brand" href={path('/')} aria-label={t('a11y.home')}>
+      <Image src={logo} alt="" width={56} height={56} class="footer-brand__logo" />
+      <span aria-hidden="true">{t('site.shortName')}</span>
+    </a>
+
+    <hr class="footer-rule" />
+
+    <div class="footer-grid">
+      {
+        columns.map((col, i) => (
+          <div class:list={['footer-col', `footer-col--${i + 1}`]}>
+            <h2 class="footer-col__title">{col.title}</h2>
+            <ul role="list">
+              {col.links.map((link) => (
+                <li>
+                  {link.external ? (
+                    <a href={link.href} target="_blank" rel="noopener">
+                      {link.label}
+                      <span class="visually-hidden"> {t('a11y.newTab')}</span>
+                    </a>
+                  ) : (
+                    <a href={link.href}>{link.label}</a>
+                  )}
+                </li>
+              ))}
+            </ul>
+          </div>
+        ))
+      }
+
+      <ul role="list" class="footer-extra">
+        {
+          extraLinks.map((link) => (
+            <li>
+              <a href={link.href}>{link.label}</a>
+            </li>
+          ))
+        }
+      </ul>
+
+      <ul role="list" class="footer-social" aria-label={t('a11y.social')}>
+        {
+          socials.map((s) => (
+            <li>
+              <a href={s.href} target="_blank" rel="noopener me" aria-label={`${s.name} ${t('a11y.newTab')}`}>
+                <Icon name={s.key} size={20} />
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+    </div>
+
+    <hr class="footer-rule" />
+
+    <p class="footer-copy">&copy; {year} {t('footer.rights')}</p>
+  </div>
+</footer>
+
+<style>
+  .site-footer {
+    margin-top: var(--space-2xl);
+    padding-block: var(--space-2xl) var(--space-xl);
+    border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+    background: var(--color-black);
+    color: var(--color-on-dark);
+  }
+
+  .site-footer--flush {
+    position: relative;
+    z-index: 1;
+    margin-top: calc(-1 * var(--radius-xl));
+  }
+
+  .footer-brand {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-sm);
+    font-size: var(--fs-md);
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-decoration: none;
+  }
+
+  .footer-brand__logo {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    outline: 1px solid var(--color-line-dark);
+  }
+
+  .footer-rule {
+    margin-block: var(--space-xl);
+    border: 0;
+    border-top: 1px solid var(--color-line-dark);
+  }
+
+  .footer-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-xl) var(--space-lg);
+  }
+
+  .footer-col__title {
+    margin-bottom: var(--space-sm);
+    font-size: var(--fs-base);
+    font-weight: 600;
+    letter-spacing: 0;
+  }
+
+  .footer-col ul,
+  .footer-extra {
+    display: grid;
+    gap: var(--space-xs);
+  }
+
+  .footer-grid a {
+    color: var(--color-on-dark-muted);
+    font-size: var(--fs-sm);
+    text-decoration: none;
+    transition: color var(--dur) var(--ease);
+  }
+
+  .footer-grid a:hover {
+    color: var(--color-white);
+    text-decoration: underline;
+    text-underline-offset: 0.25em;
+  }
+
+  .footer-extra {
+    grid-column: 1;
+  }
+
+  .footer-extra a {
+    color: var(--color-on-dark);
+    font-weight: 600;
+  }
+
+  .footer-social {
+    grid-column: 1 / -1;
+    display: flex;
+    gap: var(--space-sm);
+  }
+
+  .footer-social a {
+    display: grid;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    border: 1.5px solid var(--color-line-dark);
+    border-radius: 50%;
+    color: var(--color-on-dark);
+    transition:
+      background-color var(--dur) var(--ease),
+      color var(--dur) var(--ease),
+      border-color var(--dur) var(--ease);
+  }
+
+  .footer-social a:hover {
+    border-color: var(--color-white);
+    background: var(--color-white);
+    color: var(--color-black);
+  }
+
+  .footer-copy {
+    color: var(--color-on-dark-muted);
+    font-size: var(--fs-xs);
+  }
+
+  @media (min-width: 768px) {
+    .footer-grid {
+      grid-template-columns: repeat(3, minmax(0, 1fr)) auto;
+      grid-template-areas:
+        'c1 c2 c3 social'
+        'extra . . .';
+    }
+
+    .footer-col--1 {
+      grid-area: c1;
+    }
+
+    .footer-col--2 {
+      grid-area: c2;
+    }
+
+    .footer-col--3 {
+      grid-area: c3;
+    }
+
+    .footer-extra {
+      grid-area: extra;
+    }
+
+    .footer-social {
+      grid-area: social;
+      align-self: start;
+      grid-column: auto;
+    }
+
+    .footer-copy {
+      text-align: right;
+    }
+  }
+</style>

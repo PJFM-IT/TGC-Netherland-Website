@@ -1,0 +1,54 @@
+---
+/**
+ * Static phone mockup: dark bezel, notch and a white screen. Content goes in the slot.
+ * Sizes come from CSS variables set by the parent (see HighlightsCarousel):
+ * --phone-w, --phone-h, --bezel.
+ */
+interface Props {
+  class?: string;
+}
+
+const { class: className } = Astro.props;
+---
+
+<div class:list={['phone', className]}>
+  <div class="phone__screen">
+    <span class="phone__notch" aria-hidden="true"></span>
+    <slot />
+  </div>
+</div>
+
+<style>
+  .phone {
+    width: var(--phone-w, 300px);
+    height: var(--phone-h, 620px);
+    padding: var(--bezel, 10px);
+    border-radius: calc(var(--phone-w, 300px) * 0.16);
+    background: linear-gradient(145deg, #2b2b2e, #0b0b0c 40%, #1c1c1f);
+    box-shadow:
+      0 0 0 2px #9a9aa0,
+      0 30px 60px rgba(0, 0, 0, 0.22),
+      0 8px 18px rgba(0, 0, 0, 0.12);
+  }
+
+  .phone__screen {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    border-radius: calc(var(--phone-w, 300px) * 0.16 - var(--bezel, 10px));
+    background: #f7f6f4;
+    overflow: hidden;
+  }
+
+  .phone__notch {
+    position: absolute;
+    top: 12px;
+    left: 50%;
+    width: 34%;
+    height: 24px;
+    translate: -50% 0;
+    border-radius: var(--radius-pill);
+    background: var(--color-black);
+  }
+</style>

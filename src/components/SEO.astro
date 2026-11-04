@@ -1,0 +1,61 @@
+---
+import { defaultLang, languages, localeTags, localizePath, stripLang, type Lang } from '../i18n/utils';
+
+interface Props {
+  title: string;
+  description: string;
+  lang: Lang;
+  /** Absolute or root-relative image URL for social cards. */
+  image?: string;
+  imageAlt?: string;
+  siteName: string;
+  noindex?: boolean;
+  /** One or more schema.org objects rendered as JSON-LD. */
+  jsonLd?: Record<string, unknown> | Record<string, unknown>[];
+}
+
+const { title, description, lang, image = '/og-image.jpg', imageAlt, siteName, noindex = false, jsonLd } = Astro.props;
+
+const site = Astro.site ?? new URL(Astro.url.origin);
+const basePath = stripLang(Astro.url.pathname);
+const canonical = new URL(localizePath(basePath, lang), site).href;
+const alternates = (Object.keys(languages) as Lang[]).map((l) => ({
+  hreflang: localeTags[l],
+  href: new URL(localizePath(basePath, l), site).href,
+}));
+const xDefault = new URL(localizePath(basePath, defaultLang), site).href;
+const imageUrl = new URL(image, site).href;
+const ogLocale = { en: 'en_GB', nl: 'nl_NL' } satisfies Record<Lang, string>;
+const fullTitle = title === siteName ? title : `${title} | ${siteName}`;
+---
+
+<title>{fullTitle}</title>
+<meta name="description" content={description} />
+<link rel="canonical" href={canonical} />
+{noindex && <meta name="robots" content="noindex" />}
+{
+  !noindex &&
+    alternates.map((alt) => <link rel="alternate" hreflang={alt.hreflang} href={alt.href} />)
+}
+{!noindex && <link rel="alternate" hreflang="x-default" href={xDefault} />}
+
+<meta property="og:type" content="website" />
+<meta property="og:site_name" content={siteName} />
+<meta property="og:title" content={fullTitle} />
+<meta property="og:description" content={description} />
+<meta property="og:url" content={canonical} />
+<meta property="og:image" content={imageUrl} />
+{imageAlt && <meta property="og:image:alt" content={imageAlt} />}
+<meta property="og:locale" content={ogLocale[lang]} />
+{
+  (Object.keys(languages) as Lang[])
+    .filter((l) => l !== lang)
+    .map((l) => <meta property="og:locale:alternate" content={ogLocale[l]} />)
+}
+
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content={fullTitle} />
+<meta name="twitter:description" content={description} />
+<meta name="twitter:image" content={imageUrl} />
+
+{jsonLd && <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />}

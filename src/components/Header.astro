@@ -1,0 +1,275 @@
+---
+import { Image } from 'astro:assets';
+import logo from '../assets/images/logo-glorious-church.png';
+import LanguageSwitcher from './LanguageSwitcher.astro';
+import { localizePath, stripLang, useTranslations, type Lang } from '../i18n/utils';
+
+interface Props {
+  lang: Lang;
+}
+
+const { lang } = Astro.props;
+const t = useTranslations(lang);
+const current = stripLang(Astro.url.pathname);
+
+const links = [
+  { href: '/jesus', label: t('nav.jesus') },
+  { href: '/about', label: t('nav.about') },
+  { href: '/meetings', label: t('nav.meetings') },
+  { href: '/contact', label: t('nav.contact') },
+  { href: '/community-life', label: t('nav.community') },
+];
+const isCurrent = (href: string) => current === href || current.startsWith(`${href}/`);
+---
+
+<header class="site-header">
+  <div class="container site-header__inner">
+    <a class="brand" href={localizePath('/', lang)} aria-label={t('a11y.home')}>
+      <Image src={logo} alt="" width={52} height={52} class="brand__logo" loading="eager" />
+      <span class="brand__name" aria-hidden="true">{t('site.shortName')}</span>
+    </a>
+
+    <button
+      class="menu-toggle"
+      type="button"
+      aria-expanded="false"
+      aria-controls="site-menu"
+      data-menu-toggle
+      data-label-open={t('a11y.openMenu')}
+      data-label-close={t('a11y.closeMenu')}
+    >
+      <span class="menu-toggle__bars" aria-hidden="true"><span></span></span>
+      <span class="visually-hidden" data-menu-label>{t('a11y.openMenu')}</span>
+    </button>
+
+    <div class="site-menu" id="site-menu" data-menu>
+      <nav class="site-menu__nav" aria-label={t('a11y.mainNav')}>
+        <ul role="list" class="site-nav">
+          {
+            links.map((link) => (
+              <li>
+                <a href={localizePath(link.href, lang)} aria-current={isCurrent(link.href) ? 'page' : undefined}>
+                  {link.label}
+                </a>
+              </li>
+            ))
+          }
+        </ul>
+      </nav>
+      <LanguageSwitcher lang={lang} />
+    </div>
+  </div>
+</header>
+
+<script>
+  import { initMenu } from '../scripts/menu';
+  initMenu();
+</script>
+
+<style>
+  .site-header {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    background: var(--color-surface);
+    box-shadow: var(--shadow-sm);
+  }
+
+  .site-header__inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-md);
+    min-height: var(--header-h);
+  }
+
+  .brand {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-sm);
+    text-decoration: none;
+  }
+
+  .brand__logo {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+  }
+
+  .brand__name {
+    font-size: var(--fs-sm);
+    font-weight: 700;
+    letter-spacing: 0.06em;
+  }
+
+  /* Hamburger */
+  .menu-toggle {
+    display: grid;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: transparent;
+  }
+
+  .menu-toggle__bars,
+  .menu-toggle__bars::before,
+  .menu-toggle__bars::after,
+  .menu-toggle__bars span {
+    display: block;
+    width: 22px;
+    height: 2px;
+    border-radius: 2px;
+    background: currentColor;
+    transition:
+      transform var(--dur) var(--ease),
+      opacity var(--dur) var(--ease);
+  }
+
+  .menu-toggle__bars {
+    position: relative;
+    background: transparent;
+  }
+
+  .menu-toggle__bars::before,
+  .menu-toggle__bars::after {
+    content: '';
+    position: absolute;
+    left: 0;
+  }
+
+  .menu-toggle__bars::before {
+    top: -7px;
+  }
+
+  .menu-toggle__bars::after {
+    top: 7px;
+  }
+
+  .menu-toggle[aria-expanded='true'] .menu-toggle__bars span {
+    opacity: 0;
+  }
+
+  .menu-toggle[aria-expanded='true'] .menu-toggle__bars::before {
+    transform: translateY(7px) rotate(45deg);
+  }
+
+  .menu-toggle[aria-expanded='true'] .menu-toggle__bars::after {
+    transform: translateY(-7px) rotate(-45deg);
+  }
+
+  /* Mobile: slide-down panel */
+  .site-menu {
+    position: absolute;
+    inset: 100% 0 auto;
+    display: grid;
+    gap: var(--space-lg);
+    justify-items: start;
+    padding: var(--space-xs) var(--gutter) var(--space-xl);
+    background: var(--color-surface);
+    border-top: 1px solid var(--color-line);
+    border-radius: 0 0 var(--radius) var(--radius);
+    box-shadow: var(--shadow-lg);
+    transform: translateY(-12px);
+    opacity: 0;
+    visibility: hidden;
+    transition:
+      transform var(--dur) var(--ease),
+      opacity var(--dur) var(--ease),
+      visibility 0s linear var(--dur);
+  }
+
+  .site-menu[data-open] {
+    transform: none;
+    opacity: 1;
+    visibility: visible;
+    transition:
+      transform var(--dur) var(--ease),
+      opacity var(--dur) var(--ease);
+  }
+
+  .site-menu__nav {
+    width: 100%;
+  }
+
+  .site-nav {
+    display: grid;
+  }
+
+  .site-nav a {
+    display: block;
+    padding: var(--space-sm) 0;
+    border-bottom: 1px solid var(--color-line);
+    font-size: var(--fs-md);
+    font-weight: 500;
+    text-decoration: none;
+  }
+
+  .site-nav a[aria-current='page'] {
+    font-weight: 700;
+  }
+
+  @media (min-width: 1024px) {
+    .brand__logo {
+      width: 52px;
+      height: 52px;
+    }
+
+    .brand__name {
+      font-size: var(--fs-base);
+    }
+
+    .menu-toggle {
+      display: none;
+    }
+
+    .site-menu {
+      position: static;
+      display: flex;
+      align-items: center;
+      gap: var(--space-xl);
+      padding: 0;
+      background: none;
+      border: 0;
+      box-shadow: none;
+      transform: none;
+      opacity: 1;
+      visibility: visible;
+      transition: none;
+    }
+
+    .site-menu__nav {
+      width: auto;
+    }
+
+    .site-nav {
+      display: flex;
+      gap: clamp(1.25rem, 3vw, 2.5rem);
+    }
+
+    .site-nav a {
+      position: relative;
+      padding: var(--space-xs) 0;
+      border: 0;
+      font-size: var(--fs-sm);
+    }
+
+    .site-nav a::after {
+      content: '';
+      position: absolute;
+      inset: auto 0 0;
+      height: 2px;
+      background: currentColor;
+      transform: scaleX(0);
+      transform-origin: left;
+      transition: transform var(--dur) var(--ease);
+    }
+
+    .site-nav a:hover::after,
+    .site-nav a[aria-current='page']::after {
+      transform: scaleX(1);
+    }
+  }
+</style>
