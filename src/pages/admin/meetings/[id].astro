@@ -1,0 +1,160 @@
+---
+import AdminLayout from '../../../layouts/AdminLayout.astro';
+import {
+  deleteMeeting,
+  deleteStoredImage,
+  dutchTimezone,
+  listMeetings,
+  newId,
+  saveMeeting,
+  storeUploadedImage,
+  type Meeting,
+} from '../../../lib/admin-data';
+
+export const prerender = false;
+
+const id = Astro.params.id ?? 'new';
+const isNew = id === 'new';
+const existing = isNew ? undefined : (await listMeetings()).find((m) => m.id === id);
+if (!isNew && !existing) return Astro.redirect('/admin/');
+
+let error = '';
+// Values shown in the form: the saved meeting, or what was just typed if saving failed.
+let values: Partial<Meeting> = existing ?? {
+  time: '19:00',
+  titleEn: 'Monthly ZOOM Meet Up',
+  titleNl: 'Maandelijkse ZOOM-bijeenkomst',
+};
+
+if (Astro.request.method === 'POST') {
+  const form = await Astro.request.formData();
+  const text = (name: string) => String(form.get(name) ?? '').trim();
+
+  if (text('intent') === 'delete' && existing) {
+    await deleteMeeting(existing.id);
+    return Astro.redirect('/admin/?deleted=1');
+  }
+
+  values = {
+    ...values,
+    date: text('date'),
+    time: text('time'),
+    zoomLink: text('zoomLink'),
+    meetingId: text('meetingId') || undefined,
+    titleEn: text('titleEn'),
+    titleNl: text('titleNl'),
+    descriptionEn: text('descriptionEn') || undefined,
+    descriptionNl: text('descriptionNl') || undefined,
+  };
+
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(values.date ?? '')) error = 'Please choose a date.';
+  else if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(values.time ?? '')) error = 'Please enter the start time, e.g. 19:00.';
+  else if (!/^https:\/\/\S+$/.test(values.zoomLink ?? '')) error = 'Please paste the ZOOM link (it starts with https://).';
+  else if (!values.titleEn || !values.titleNl) error = 'Please fill in both titles.';
+
+  if (!error) {
+    try {
+      const upload = await storeUploadedImage(form.get('poster'), 1200);
+      let poster = existing?.poster;
+      if (upload || text('removePoster') === 'yes') {
+        await deleteStoredImage(existing?.poster?.url);
+        poster = upload ?? undefined;
+      }
+      await saveMeeting({ ...(values as Meeting), id: existing?.id ?? newId(), poster });
+      return Astro.redirect('/admin/?saved=1');
+    } catch (e) {
+      error = e instanceof Error ? e.message : 'Saving failed. Please try again.';
+    }
+  }
+}
+
+const timezone = values.date ? dutchTimezone(values.date) : undefined;
+---
+
+<AdminLayout title={isNew ? 'Add meeting' : 'Edit meeting'}>
+  <p><a href="/admin/">← Back to dashboard</a></p>
+  <h1>{isNew ? 'Add meeting' : 'Edit meeting'}</h1>
+
+  <div class="admin-card">
+    <form method="post" enctype="multipart/form-data" class="admin-form" data-upload-form>
+      <div class="row">
+        <div class="field">
+          <label for="date">Date</label>
+          <input id="date" name="date" type="date" required value={values.date} />
+        </div>
+        <div class="field">
+          <label for="time">Start time (Dutch time)</label>
+          <input id="time" name="time" type="time" required value={values.time} />
+          <span class="hint">{timezone ? `${timezone} is shown automatically.` : 'CET or CEST is added automatically.'}</span>
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="poster">Poster</label>
+        <input id="poster" name="poster" type="file" accept="image/jpeg,image/png,image/webp" data-max-width="1600" />
+        <span class="hint">Portrait flyer, JPG or PNG. Visitors click it to join on ZOOM. Large photos are made smaller automatically.</span>
+        {
+          values.poster && (
+            <>
+              <img class="admin-preview" src={values.poster.url} alt="Current poster" data-preview />
+              <label class="hint">
+                <input type="checkbox" name="removePoster" value="yes" /> Remove this poster
+              </label>
+            </>
+          )
+        }
+        {!values.poster && <img class="admin-preview" alt="" data-preview hidden />}
+      </div>
+
+      <div class="row">
+        <div class="field">
+          <label for="zoomLink">ZOOM link</label>
+          <input id="zoomLink" name="zoomLink" type="url" required placeholder="https://zoom.us/j/…" value={values.zoomLink} />
+        </div>
+        <div class="field">
+          <label for="meetingId">ZOOM meeting ID <span class="hint">(optional)</span></label>
+          <input id="meetingId" name="meetingId" type="text" placeholder="839 0399 8030" value={values.meetingId} />
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="field">
+          <label for="titleEn">Title (English)</label>
+          <input id="titleEn" name="titleEn" type="text" required value={values.titleEn} />
+        </div>
+        <div class="field">
+          <label for="titleNl">Title (Nederlands)</label>
+          <input id="titleNl" name="titleNl" type="text" required value={values.titleNl} />
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="field">
+          <label for="descriptionEn">Short text (English) <span class="hint">(optional)</span></label>
+          <textarea id="descriptionEn" name="descriptionEn" rows="3">{values.descriptionEn}</textarea>
+          <span class="hint">Only shown when there is no poster.</span>
+        </div>
+        <div class="field">
+          <label for="descriptionNl">Short text (Nederlands) <span class="hint">(optional)</span></label>
+          <textarea id="descriptionNl" name="descriptionNl" rows="3">{values.descriptionNl}</textarea>
+        </div>
+      </div>
+
+      {error && <p class="admin-alert admin-alert--error" role="alert">{error}</p>}
+
+      <div class="admin-actions">
+        <button class="btn btn--solid" type="submit" data-submit>Save meeting</button>
+      </div>
+    </form>
+
+    {
+      existing && (
+        <form method="post" class="admin-actions" data-confirm="Delete this meeting? This cannot be undone.">
+          <input type="hidden" name="intent" value="delete" />
+          <span />
+          <button class="btn btn--danger btn--sm" type="submit">Delete meeting</button>
+        </form>
+      )
+    }
+  </div>
+</AdminLayout>
