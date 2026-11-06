@@ -18,3 +18,7 @@ npm-debug.log*
 .idea/
 .netlify/
 .wrangler/
+
+# admin data saved locally (meetings, videos, uploads)
+/data/
+.vercel/

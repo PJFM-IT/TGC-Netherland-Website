@@ -1,11 +1,11 @@
 ---
-import type { CollectionEntry } from 'astro:content';
+import type { HighlightView } from '../lib/content';
 import HighlightVideo from './HighlightVideo.astro';
 import { formatLongDate, useTranslations, type Lang } from '../i18n/utils';
 
 /** Content of one highlight: date label, date, title, speaker and the video. */
 interface Props {
-  entry: CollectionEntry<'highlights'>;
+  entry: HighlightView;
   lang: Lang;
   headingLevel?: 'h2' | 'h3';
 }

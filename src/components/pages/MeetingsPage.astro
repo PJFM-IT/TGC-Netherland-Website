@@ -1,5 +1,4 @@
 ---
-import { Image } from 'astro:assets';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import Button from '../Button.astro';
 import Icon from '../Icon.astro';
@@ -45,11 +44,13 @@ const flyerAlt = (m: (typeof meetings)[number]['data']) => {
               <li>
                 {data.flyer ? (
                   <a class="flyer" href={data.zoomLink} target="_blank" rel="noopener" title={t('meetings.joinFlyer')}>
-                    <Image
-                      src={data.flyer}
+                    <img
+                      src={data.flyer.url}
+                      width={data.flyer.width}
+                      height={data.flyer.height}
                       alt={flyerAlt(data)}
-                      widths={[343, 480, 686]}
-                      sizes="(min-width: 768px) 430px, 100vw"
+                      loading="lazy"
+                      decoding="async"
                       class="flyer__img"
                     />
                     <span class="visually-hidden"> – {t('meetings.joinFlyer')} {t('a11y.newTab')}</span>

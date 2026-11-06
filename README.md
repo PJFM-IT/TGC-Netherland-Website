@@ -1,6 +1,6 @@
 # TGC Netherlands – Glorious Church Nederland
 
-Static website for **Glorious Church Nederland** (https://gloriouschurch.nl), built with Astro 7.
+Website for **Glorious Church Nederland** (https://gloriouschurch.nl), built with Astro 7.
 Plain CSS, TypeScript client scripts, no UI framework. English is the default language; Dutch lives under `/nl/`.
 
 ## Requirements
@@ -13,8 +13,9 @@ Plain CSS, TypeScript client scripts, no UI framework. English is the default la
 ```bash
 npm install
 npm run dev       # dev server on http://localhost:4321
-npm run build     # static site in dist/
-npm run preview   # serve dist/ locally
+npm run build     # builds the site into dist/
+npm start         # runs the built site (Node server), e.g. on your own server
+npm run preview   # preview the built site locally
 npm run check     # TypeScript + Astro diagnostics
 ```
 
@@ -36,11 +37,31 @@ src/
 public/               robots.txt, favicon.png, apple-touch-icon.png, og-image.jpg, _headers
 ```
 
+## Admin: meetings and Community Life videos
+
+The church admin manages **meetings** (with poster) and **Community Life videos** at
+**`/admin`** (for example http://localhost:4321/admin/). There is one shared password,
+`ADMIN_PASSWORD`, and the browser stays logged in for 30 days.
+
+- Saved changes appear on the website immediately (the Meetings and Community Life pages are
+  rendered on each visit; every other page is pre-built HTML).
+- One meeting entry fills both the English and the Dutch page. CET/CEST is worked out from the date,
+  and meetings disappear from the website by themselves once their date has passed.
+- Uploaded images are checked, resized and saved as WebP. Large phone photos are made smaller in the
+  browser first.
+- Where data is kept: **Vercel Blob** on Vercel, or the **`data/`** folder (`DATA_DIR`) on any other
+  server and locally. Back up `data/` on your own server.
+- Until the admin saves for the first time, the site shows the starting content from
+  `src/content/meetings` and `src/content/highlights`. The first save copies it into the admin.
+
+Code: `src/pages/admin/`, `src/lib/admin-data.ts` (data), `src/lib/store.ts` (Blob or disk),
+`src/lib/auth.ts` (login), `src/middleware.ts` (protects `/admin`).
+
 ## Editing content
 
-All content is plain JSON in `src/content/`. Each entry is its own file, so a headless CMS
-(Decap, Sanity, …) can be connected later without restructuring. The build fails with a clear
-message if a field is missing or invalid.
+Everything else is plain JSON in `src/content/` (pastors, settings) and `src/i18n/` (text). The
+build fails with a clear message if a field is missing or invalid. The meeting and highlight JSON
+files below are only the starting content for the admin.
 
 ### Add a Community Life highlight
 
@@ -126,24 +147,34 @@ Copy `.env.example` to `.env` for local use, and set the same variables in your 
 
 | Variable              | Required | Purpose |
 | --------------------- | -------- | ------- |
+| `ADMIN_PASSWORD`      | **Yes**  | Password for `/admin` (at least 8 characters). Without it, nobody can log in. Changing it logs everyone out. |
+| `BLOB_READ_WRITE_TOKEN` | On Vercel | Set by Vercel when you connect a **public** Blob store. When set, the admin saves to Vercel Blob. |
+| `DATA_DIR`            | No       | Folder for admin data on your own server (default `./data`). |
 | `PUBLIC_FORMSPREE_ID` | No       | Formspree form ID (the part after `https://formspree.io/f/`). Used by `src/components/ContactForm.astro` (not on any page right now; the Contact page design has no form). When set, the form posts to Formspree. When empty, submitting opens the visitor's email app addressed to the email in `site.json`. |
 
-The value is baked in at build time, so redeploy after changing it.
+`PUBLIC_FORMSPREE_ID` is baked in at build time, so redeploy after changing it.
 
 ## Deploy
 
-The site is fully static (`dist/`).
+Most pages are pre-built; the Meetings, Community Life and `/admin` pages run on a small server
+function. `astro.config.mjs` picks the right adapter automatically.
 
-**Netlify:** connect the repository. `netlify.toml` already sets the build command
-(`npm run build`), the publish directory (`dist`) and Node 22. Add `PUBLIC_FORMSPREE_ID` under
-*Site configuration → Environment variables* if you use Formspree.
+**Vercel (preview):**
+1. Import the GitHub repository in Vercel. The defaults (`npm run build`) are correct.
+2. Project → **Storage** → create a **Blob** store with **public** access and connect it to the project
+   (this adds `BLOB_READ_WRITE_TOKEN`).
+3. Project → Settings → **Environment Variables**: add `ADMIN_PASSWORD`. Redeploy.
 
-**Cloudflare Pages:** connect the repository and use
-- Build command: `npm run build`
-- Build output directory: `dist`
-- Environment variables: `NODE_VERSION=22.12.0` and optionally `PUBLIC_FORMSPREE_ID`
+**Your own server (later):** needs Node.js 22.12+.
+```bash
+npm ci && npm run build
+ADMIN_PASSWORD=… PORT=4321 HOST=0.0.0.0 npm start   # serves the whole site
+```
+Run it behind a web server with HTTPS (e.g. nginx or Caddy) and keep it running with a process
+manager (e.g. pm2 or systemd). Admin data is saved in `data/`; include it in backups. To move the
+admin's content from Vercel, download the files from the Vercel Blob store into `data/`
+(`data/meetings.json`, `data/videos.json`, `data/uploads/`) and update the image URLs in the two JSON files.
 
-Both hosts read `public/_headers` (long-lived caching for hashed assets in `/_astro/`).
 After the first deploy, submit `https://gloriouschurch.nl/sitemap-index.xml` in Google Search Console.
 
 ## Notes

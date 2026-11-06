@@ -1,5 +1,5 @@
 ---
-import type { CollectionEntry } from 'astro:content';
+import type { HighlightView } from '../lib/content';
 import Icon from './Icon.astro';
 import PhoneFrame from './PhoneFrame.astro';
 import HighlightVideo from './HighlightVideo.astro';
@@ -12,7 +12,7 @@ import { formatLongDate, localizePath, useTranslations, type Lang } from '../i18
  */
 interface Props {
   lang: Lang;
-  entries: CollectionEntry<'highlights'>[];
+  entries: HighlightView[];
 }
 
 const { lang, entries } = Astro.props;

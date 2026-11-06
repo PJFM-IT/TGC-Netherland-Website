@@ -1,0 +1,54 @@
+---
+import AdminLayout from '../../layouts/AdminLayout.astro';
+import { adminConfigured, checkPassword, hasSession, startSession } from '../../lib/auth';
+
+export const prerender = false;
+
+if (hasSession(Astro.cookies)) return Astro.redirect('/admin/');
+
+let error = '';
+if (Astro.request.method === 'POST') {
+  const form = await Astro.request.formData();
+  if (checkPassword(String(form.get('password') ?? ''))) {
+    startSession(Astro.cookies, Astro.url.protocol === 'https:');
+    return Astro.redirect('/admin/');
+  }
+  // A short pause makes guessing passwords slow.
+  await new Promise((resolve) => setTimeout(resolve, 1000));
+  error = 'That password is not correct.';
+}
+---
+
+<AdminLayout title="Log in" bare>
+  <div class="admin-card login">
+    <h1>TGC Netherlands admin</h1>
+    {
+      !adminConfigured() ? (
+        <p class="admin-alert admin-alert--error">
+          The admin password has not been set yet. Add <code>ADMIN_PASSWORD</code> (at least 8 characters) to the
+          hosting settings.
+        </p>
+      ) : (
+        <form method="post" class="admin-form">
+          <div class="field">
+            <label for="password">Password</label>
+            <input id="password" name="password" type="password" autocomplete="current-password" required autofocus />
+          </div>
+          {error && <p class="admin-alert admin-alert--error" role="alert">{error}</p>}
+          <button class="btn btn--solid" type="submit">Log in</button>
+        </form>
+      )
+    }
+  </div>
+</AdminLayout>
+
+<style>
+  .login {
+    max-width: 420px;
+    margin: 12vh auto 0;
+  }
+
+  .login h1 {
+    margin-bottom: 1.25rem;
+  }
+</style>

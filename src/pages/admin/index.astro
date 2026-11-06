@@ -1,0 +1,77 @@
+---
+import AdminLayout from '../../layouts/AdminLayout.astro';
+import { dutchTimezone, listMeetings, listVideos } from '../../lib/admin-data';
+
+export const prerender = false;
+
+const [meetings, videos] = await Promise.all([listMeetings(), listVideos()]);
+const today = new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Amsterdam' }).format(new Date());
+const niceDate = (iso: string) =>
+  new Intl.DateTimeFormat('en-GB', { weekday: 'short', day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' }).format(
+    new Date(`${iso}T00:00:00Z`),
+  );
+
+const saved = Astro.url.searchParams.get('saved');
+const deleted = Astro.url.searchParams.get('deleted');
+---
+
+<AdminLayout title="Dashboard">
+  <h1>Dashboard</h1>
+  {saved && <p class="admin-alert admin-alert--ok" role="status">Saved. The website shows it now.</p>}
+  {deleted && <p class="admin-alert admin-alert--ok" role="status">Deleted.</p>}
+
+  <section class="admin-card" aria-labelledby="meetings-title">
+    <div class="admin-section-head">
+      <h2 id="meetings-title">Meetings</h2>
+      <a class="btn btn--solid" href="/admin/meetings/new/">+ Add meeting</a>
+    </div>
+    {
+      meetings.length === 0 ? (
+        <p class="admin-empty">No meetings yet.</p>
+      ) : (
+        <ul class="admin-list">
+          {meetings.map((m) => (
+            <li class="admin-row">
+              {m.poster ? <img src={m.poster.url} alt="" loading="lazy" /> : <img alt="" />}
+              <div class="admin-row__text">
+                <div class="admin-row__title">
+                  {niceDate(m.date)} · {m.time} {dutchTimezone(m.date)}
+                  {m.date < today && <span class="admin-badge">past · hidden on website</span>}
+                </div>
+                <div class="admin-row__meta">{m.titleEn}</div>
+              </div>
+              <a class="btn btn--sm" href={`/admin/meetings/${m.id}/`}>Edit</a>
+            </li>
+          ))}
+        </ul>
+      )
+    }
+  </section>
+
+  <section class="admin-card" aria-labelledby="videos-title">
+    <div class="admin-section-head">
+      <h2 id="videos-title">Community Life videos</h2>
+      <a class="btn btn--solid" href="/admin/videos/new/">+ Add video</a>
+    </div>
+    {
+      videos.length === 0 ? (
+        <p class="admin-empty">No videos yet.</p>
+      ) : (
+        <ul class="admin-list">
+          {videos.map((v) => (
+            <li class="admin-row">
+              <img src={v.photo.url} alt="" loading="lazy" />
+              <div class="admin-row__text">
+                <div class="admin-row__title">{v.title}</div>
+                <div class="admin-row__meta">
+                  {niceDate(v.date)} · {v.speaker}
+                </div>
+              </div>
+              <a class="btn btn--sm" href={`/admin/videos/${v.id}/`}>Edit</a>
+            </li>
+          ))}
+        </ul>
+      )
+    }
+  </section>
+</AdminLayout>

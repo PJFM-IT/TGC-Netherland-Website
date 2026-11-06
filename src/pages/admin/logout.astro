@@ -1,0 +1,9 @@
+---
+import { endSession } from '../../lib/auth';
+
+export const prerender = false;
+
+// Log out only on POST (the "Log out" button), so a link elsewhere can't log the admin out.
+if (Astro.request.method === 'POST') endSession(Astro.cookies);
+return Astro.redirect(Astro.request.method === 'POST' ? '/admin/login/' : '/admin/');
+---

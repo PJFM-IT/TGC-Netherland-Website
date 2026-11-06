@@ -1,0 +1,275 @@
+---
+import { Font } from 'astro:assets';
+import '../styles/global.css';
+
+interface Props {
+  title: string;
+  /** Hide the top bar (login page). */
+  bare?: boolean;
+}
+
+const { title, bare = false } = Astro.props;
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex, nofollow" />
+    <link rel="icon" type="image/png" href="/favicon.png" />
+    <title>{title} · TGC Netherlands admin</title>
+    <Font cssVariable="--font-poppins" />
+  </head>
+  <body class="admin">
+    {
+      !bare && (
+        <header class="admin-bar">
+          <div class="admin-wrap admin-bar__inner">
+            <a class="admin-bar__brand" href="/admin/">TGC Netherlands · Admin</a>
+            <nav class="admin-bar__nav" aria-label="Admin">
+              <a href="/admin/">Dashboard</a>
+              <a href="/" target="_blank" rel="noopener">View website ↗</a>
+              <form method="post" action="/admin/logout/">
+                <button type="submit" class="admin-link">Log out</button>
+              </form>
+            </nav>
+          </div>
+        </header>
+      )
+    }
+    <main class="admin-wrap admin-main">
+      <slot />
+    </main>
+    <script>
+      import '../scripts/admin';
+    </script>
+  </body>
+</html>
+
+<style is:global>
+  body.admin {
+    background: #f3f4f6;
+  }
+
+  .admin-wrap {
+    width: min(920px, 100% - 32px);
+    margin-inline: auto;
+  }
+
+  .admin-bar {
+    background: var(--color-black);
+    color: var(--color-white);
+  }
+
+  .admin-bar__inner {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem 1.5rem;
+    min-height: 56px;
+  }
+
+  .admin-bar__brand {
+    font-weight: 600;
+    text-decoration: none;
+  }
+
+  .admin-bar__nav {
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+    font-size: var(--fs-sm);
+  }
+
+  .admin-bar__nav a,
+  .admin-link {
+    padding: 0;
+    border: 0;
+    background: none;
+    color: inherit;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+
+  .admin-main {
+    padding-block: 2rem 4rem;
+  }
+
+  .admin h1 {
+    font-size: 1.6rem;
+  }
+
+  .admin h2 {
+    font-size: 1.2rem;
+  }
+
+  .admin-card {
+    margin-top: 1.25rem;
+    padding: 1.5rem;
+    border-radius: 12px;
+    background: var(--color-white);
+    box-shadow: var(--shadow-sm);
+  }
+
+  .admin-section-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+  }
+
+  .admin-list {
+    display: grid;
+    gap: 0.5rem;
+    margin: 1rem 0 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .admin-row {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.6rem;
+    border: 1px solid var(--color-line);
+    border-radius: 10px;
+  }
+
+  .admin-row img {
+    width: 56px;
+    height: 70px;
+    flex-shrink: 0;
+    border-radius: 6px;
+    object-fit: cover;
+    background: #e5e7eb;
+  }
+
+  .admin-row__text {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .admin-row__title {
+    font-weight: 600;
+  }
+
+  .admin-row__meta {
+    color: var(--color-muted);
+    font-size: var(--fs-sm);
+  }
+
+  .admin-badge {
+    display: inline-block;
+    margin-left: 0.4rem;
+    padding: 0.1rem 0.5rem;
+    border-radius: 999px;
+    background: #e5e7eb;
+    color: var(--color-ink-soft);
+    font-size: var(--fs-xs);
+    font-weight: 500;
+  }
+
+  .admin-empty {
+    margin-top: 1rem;
+    color: var(--color-muted);
+  }
+
+  /* Forms */
+  .admin-form {
+    display: grid;
+    gap: 1.1rem;
+  }
+
+  .admin-form .row {
+    display: grid;
+    gap: 1.1rem;
+  }
+
+  @media (min-width: 640px) {
+    .admin-form .row {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+
+  .field {
+    display: grid;
+    gap: 0.3rem;
+  }
+
+  .field label,
+  .field legend {
+    font-size: var(--fs-sm);
+    font-weight: 600;
+  }
+
+  .field .hint {
+    color: var(--color-muted);
+    font-size: var(--fs-xs);
+  }
+
+  .field input[type='text'],
+  .field input[type='url'],
+  .field input[type='date'],
+  .field input[type='time'],
+  .field input[type='password'],
+  .field textarea {
+    width: 100%;
+    min-height: 44px;
+    padding: 0.6rem 0.8rem;
+    border: 1.5px solid #d1d5db;
+    border-radius: 8px;
+    background: var(--color-white);
+  }
+
+  .field input:focus,
+  .field textarea:focus {
+    border-color: var(--color-ink);
+  }
+
+  .field input[type='file'] {
+    font-size: var(--fs-sm);
+  }
+
+  .admin-preview {
+    max-width: 220px;
+    margin-top: 0.4rem;
+    border-radius: 8px;
+    box-shadow: var(--shadow-sm);
+  }
+
+  .admin-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-top: 0.5rem;
+  }
+
+  .btn--danger {
+    --btn-fg: #a3261c;
+    --btn-border: #a3261c;
+    --btn-hover-bg: #a3261c;
+    --btn-hover-fg: #fff;
+  }
+
+  .admin-alert {
+    margin-top: 1rem;
+    padding: 0.75rem 1rem;
+    border-radius: 8px;
+    font-size: var(--fs-sm);
+  }
+
+  .admin-alert--error {
+    background: #fdecea;
+    color: #8a1c13;
+  }
+
+  .admin-alert--ok {
+    background: #e7f5ea;
+    color: #1e6b32;
+  }
+</style>

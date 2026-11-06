@@ -1,0 +1,134 @@
+---
+import AdminLayout from '../../../layouts/AdminLayout.astro';
+import {
+  deleteStoredImage,
+  deleteVideo,
+  listVideos,
+  newId,
+  saveVideo,
+  storeUploadedImage,
+  youtubeIdFrom,
+  type Video,
+} from '../../../lib/admin-data';
+
+export const prerender = false;
+
+const id = Astro.params.id ?? 'new';
+const isNew = id === 'new';
+const existing = isNew ? undefined : (await listVideos()).find((v) => v.id === id);
+if (!isNew && !existing) return Astro.redirect('/admin/');
+
+let error = '';
+let values: Partial<Video> & { youtubeUrl?: string } = existing
+  ? { ...existing, youtubeUrl: `https://youtu.be/${existing.youtubeId}` }
+  : { speaker: 'Glorious Church Nederland' };
+
+if (Astro.request.method === 'POST') {
+  const form = await Astro.request.formData();
+  const text = (name: string) => String(form.get(name) ?? '').trim();
+
+  if (text('intent') === 'delete' && existing) {
+    await deleteVideo(existing.id);
+    return Astro.redirect('/admin/?deleted=1');
+  }
+
+  values = {
+    ...values,
+    youtubeUrl: text('youtubeUrl'),
+    date: text('date'),
+    title: text('title'),
+    titleNl: text('titleNl') || undefined,
+    speaker: text('speaker'),
+    speakerNl: text('speakerNl') || undefined,
+  };
+  const youtubeId = youtubeIdFrom(values.youtubeUrl ?? '');
+
+  if (!youtubeId) error = 'Please paste a YouTube video link (YouTube → Share → Copy).';
+  else if (!/^\d{4}-\d{2}-\d{2}$/.test(values.date ?? '')) error = 'Please choose the date it happened.';
+  else if (!values.title || !values.speaker) error = 'Please fill in the title and the speaker.';
+
+  if (!error) {
+    try {
+      const upload = await storeUploadedImage(form.get('photo'), 900);
+      const photo = upload ?? existing?.photo;
+      if (!photo) {
+        error = 'Please choose a photo.';
+      } else {
+        if (upload) await deleteStoredImage(existing?.photo.url);
+        const { youtubeUrl: _ignored, ...rest } = values;
+        await saveVideo({ ...(rest as Video), id: existing?.id ?? newId(), youtubeId: youtubeId!, photo });
+        return Astro.redirect('/admin/?saved=1');
+      }
+    } catch (e) {
+      error = e instanceof Error ? e.message : 'Saving failed. Please try again.';
+    }
+  }
+}
+---
+
+<AdminLayout title={isNew ? 'Add video' : 'Edit video'}>
+  <p><a href="/admin/">← Back to dashboard</a></p>
+  <h1>{isNew ? 'Add Community Life video' : 'Edit Community Life video'}</h1>
+
+  <div class="admin-card">
+    <form method="post" enctype="multipart/form-data" class="admin-form" data-upload-form>
+      <div class="row">
+        <div class="field">
+          <label for="youtubeUrl">YouTube link</label>
+          <input id="youtubeUrl" name="youtubeUrl" type="url" required placeholder="https://youtu.be/…" value={values.youtubeUrl} />
+          <span class="hint">On YouTube: Share → Copy, then paste here.</span>
+        </div>
+        <div class="field">
+          <label for="date">Date it happened</label>
+          <input id="date" name="date" type="date" required value={values.date} />
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="photo">Photo</label>
+        <input id="photo" name="photo" type="file" accept="image/jpeg,image/png,image/webp" data-max-width="1200" required={!values.photo} />
+        <span class="hint">A portrait (standing) photo works best. Keep faces in the middle; the title is shown at the top.</span>
+        {values.photo ? <img class="admin-preview" src={values.photo.url} alt="Current photo" data-preview /> : <img class="admin-preview" alt="" data-preview hidden />}
+      </div>
+
+      <div class="row">
+        <div class="field">
+          <label for="title">Title (English)</label>
+          <input id="title" name="title" type="text" required value={values.title} />
+        </div>
+        <div class="field">
+          <label for="titleNl">Title (Nederlands) <span class="hint">(optional)</span></label>
+          <input id="titleNl" name="titleNl" type="text" value={values.titleNl} />
+          <span class="hint">If empty, the English title is used on the Dutch pages.</span>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="field">
+          <label for="speaker">Speaker</label>
+          <input id="speaker" name="speaker" type="text" required value={values.speaker} />
+        </div>
+        <div class="field">
+          <label for="speakerNl">Speaker (Nederlands) <span class="hint">(optional)</span></label>
+          <input id="speakerNl" name="speakerNl" type="text" value={values.speakerNl} />
+        </div>
+      </div>
+
+      {error && <p class="admin-alert admin-alert--error" role="alert">{error}</p>}
+
+      <div class="admin-actions">
+        <button class="btn btn--solid" type="submit" data-submit>Save video</button>
+      </div>
+    </form>
+
+    {
+      existing && (
+        <form method="post" class="admin-actions" data-confirm="Delete this video? This cannot be undone.">
+          <input type="hidden" name="intent" value="delete" />
+          <span />
+          <button class="btn btn--danger btn--sm" type="submit">Delete video</button>
+        </form>
+      )
+    }
+  </div>
+</AdminLayout>
